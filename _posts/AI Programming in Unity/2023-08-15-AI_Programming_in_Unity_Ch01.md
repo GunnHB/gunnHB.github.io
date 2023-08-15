@@ -2,7 +2,6 @@
 layout: post
 title:  "[유니티 게임 AI 프로그래밍] 001. 게임에서의 인공지능 기초"
 excerpt: "게임에서 사용되는 인공지능을 가볍게 알아봅시다!"
-author_profile: true
 
 author: gunnHB
 categories: 
