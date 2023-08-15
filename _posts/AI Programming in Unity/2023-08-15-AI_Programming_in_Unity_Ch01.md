@@ -2,6 +2,7 @@
 layout: post
 title:  "[유니티 게임 AI 프로그래밍] 001. 게임에서의 인공지능 기초"
 excerpt: "게임에서 사용되는 인공지능을 가볍게 알아봅시다!"
+author_profile: true
 
 author: gunnHB
 categories: 
@@ -18,7 +19,6 @@ last_modified_at: 2023-08-15
 
 🟡 유니티 게임 AI 프로그래밍 2/e 서적을 정리한 내용입니다.
 {: .notice--primary}
-<br>
 
 <div class="notice--info" markdown="1">
 일반적으로 `인공지능`은 복잡하고 어려운 주제라고 생각하기 쉽습니다.
@@ -32,7 +32,6 @@ last_modified_at: 2023-08-15
 
 1장의 내용은 유니티에서의 인공지능 패턴을 구현함에 있어 필요한 참고 자료를 제공하는 역할입니다.
 </div>
-<br>
 
 ## 가상의 삶 구현
 ---
