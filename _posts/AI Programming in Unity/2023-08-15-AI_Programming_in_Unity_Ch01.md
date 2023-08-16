@@ -12,10 +12,10 @@ toc: true
 toc_sticky: true
  
 date: 2023-08-15
-last_modified_at: 2023-08-15
+last_modified_at: 2023-08-16
 ---
 
-🟡 유니티 게임 AI 프로그래밍 2/e 서적을 정리한 내용입니다.
+🔔 유니티 게임 AI 프로그래밍 2/e 서적을 정리한 내용입니다. 🔔
 {: .notice--primary}
 
 <div class="notice--info" markdown="1">
