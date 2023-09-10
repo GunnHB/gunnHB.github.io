@@ -12,11 +12,11 @@ toc: true
 toc_sticky: true
  
 date: 2023-08-15
-last_modified_at: 2023-08-16
+last_modified_at: 2023-09-10
 ---
 
 🔔 유니티 게임 AI 프로그래밍 2/e 서적을 정리한 내용입니다. 🔔
-{: .notice--primary}
+{: .notice}
 
 <div class="notice--info" markdown="1">
 일반적으로 `인공지능`은 복잡하고 어려운 주제라고 생각하기 쉽습니다.
