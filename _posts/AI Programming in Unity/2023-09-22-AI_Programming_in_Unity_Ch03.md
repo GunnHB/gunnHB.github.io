@@ -156,9 +156,9 @@ public class PlayerTank : MonoBehaviour
         Quaternion tarRot = Quaternion.LookRotation(dirRot);
 
         // 보간법을 사용해서 이동하고 회전
-        transform.rotation = Quaternion.Slerp(transform.rotation, tarRot, rotSpeed * Time.DeltaTime);
+        transform.rotation = Quaternion.Slerp(transform.rotation, tarRot, rotSpeed * Time.deltaTime);
 
-        transform.Translate(new Vector3(0, 0, monvementSpeed * Time.DeltaTime));
+        transform.Translate(new Vector3(0, 0, monvementSpeed * Time.deltaTime));
     }
 }
 ```
@@ -238,8 +238,8 @@ public class Wander : MonoBehaviour
         Quaternion tarRot = Quaternion.LookRotation(tarPos - transform.position);
 
         // 회전과 트랜슬레이션 갱신
-        transform.rotation = Quaternion.Slerp(transform.rotation, tarRot, rotSpeed * Time.DeltaTime);
-        Transform.Translate(new Vector3(0, 0, movementSpeed * Time.DeltaTime));
+        transform.rotation = Quaternion.Slerp(transform.rotation, tarRot, rotSpeed * Time.deltaTime);
+        Transform.Translate(new Vector3(0, 0, movementSpeed * Time.deltaTime));
     }
 
     private void GetNextPosition()
@@ -248,6 +248,7 @@ public class Wander : MonoBehaviour
     }
 }
 ```
+
 `Wander` 스크립트는 인공지능 캐릭터가 현재 목적지에 도달할 때마다 새로운 임의의 지점을 
 지정된 영역 내에서 생성합니다. 이후 `Update` 메소드는 적을 회전시키고 새로운 목적지를 향해
 이동시킵니다. 이 스크립트를 인공지능 캐릭터에 연결하면 이제 씬 내에서 돌아다니는 모습을 볼 수 있습니다.
@@ -284,5 +285,127 @@ public class Sense : MonoBehaviour
     }
 }
 ```
+
 기본 속성은 찾고자 하는 특성의 이름과 더불어 감지율도 포함하고 있습니다.
 이 스크립트는 어떤 오브젝트에도 연결되진 않습니다.
+
+## 약간의 시각 부여
+시각은 특정한 특성을 가진 개체가 시야 범위 내에 있는지 검사합니다. 만일 찾던 개체를 발견하면 특정 동작을 수행합니다.
+
+```c#
+using UnityEngine;
+using System.Collections;
+
+public class Perspective : Sense
+{
+    public int FieldOfView = 45;
+    public int ViewDistance = 100;
+
+    private Transform playerTras;
+    private Vector3 rayDirection;
+
+    protected override void Initialize()
+    {
+        // 플레이어 위치 찾기
+        playerTrans = GameObject.FinGameObjectWithTag("Player").transform;
+    }
+
+    // Update는 프레임 당 한번 호출
+    protected override void UpdateSense()
+    {
+        elapsedTime += Time.deltaTime;
+
+        // 검출 범위에 있으면 시각 검사를 수행
+        if(elapsedTime >= detectionRate)
+            DetectAspect();
+    }
+
+    // 인공지능 캐릭터에 대한 시야를 검사
+    private void DetectAspect()
+    {
+        RaycastHit hit;
+
+        rayDirection = playerTrans.position - transform.position;
+
+        // 인공지능 캐릭터의 전방 벡터와 플레이어와 인공지능 캐릭터 사이의
+        // 방향 벡터 간의 각도를 검사
+        if(Vector3.Angle(rayDirection, transform.forward) < FieldOfView)
+        {
+            // 플레이어가 시야에 들어왔는지 검사
+            if(Physics.Raycast(transform.position, rayDirection, out hit, ViewDistance))
+            {
+                Aspect aspect = hit.collider.GetComponent<Aspect>();
+
+                if(aspect != null)
+                {
+                    // 특성 검사
+                    if(aspect.aspectName == aspectName)
+                        print("Enemy Detected");
+                }
+            }
+        }
+    }
+}
+```
+
+플레이 테스트를 하는 동안 `OnDrawGizmos` 메소드는 시야 범위를 표시하는 선을 그려서 인공지능 캐릭터가
+에디터 창에서 어디까지 볼 수 있는지를 표시합니다. 이 스크립트를 인공지능 캐릭터에 연곃라고 특성 이름을
+잊지 말고 `Enemy`로 설정합시다.
+
+```c#
+private void OnDrawGizmos()
+{
+    if(playerTrans == null)
+        return;
+
+    Debug.DrawLine(transform.position, playerTrans.position, Color.red);
+
+    Vector3 frontRayPoint = transform.position + (transform.forward * ViewDistance);
+
+    // 대략적인 시야 범위 시각화
+    Vector3 leftRayPoint = frontRayPoint;
+    leftRayPoint.x += FieldOfView * .5f;
+
+    Vector3 rightRayPoint = frontRayPoint;
+    rightRayPoint.x += FieldOfView * .5f;
+
+    Debug.DrawLine(transform.position, frontRayPoint, Color.green);
+
+    Debug.DrawLine(transform.position, leftRayPoint, Color.green);
+
+    Debug.DrawLine(transform.position, rightRayPoint, Color.green);
+}
+```
+
+## 촉각 활용
+플레이어 개체가 인공지능 개체 근처에 있을 때 알아채는 용도로 사용하는 촉각을 구현하기 위해
+`Touch.cs`를 구현합시다.
+
+`OnTriggerEnter` 이벤트를 구현해야 콜라이더 컴포넌트가 다른 콜라이더 컴포넌트와 충돌할 때
+알림을 받을 수 있습니다.
+
+```c#
+using UnityEngine;
+using System.Collections;
+
+public class Touch : Sense
+{
+    void OnTriggerEnter(Collider other)
+    {
+        Aspect aspect = other.GetComponent<Aspect>();
+
+        if(aspect != null)
+        {
+            if(aspect.aspectName == asepectName)
+                print("Enemy Touch Detected");
+        }
+    }
+}
+```
+
+`OnTriggerEnter` 메소드 냉에서 충돌한 다른 개체의 특성 컴포넌트에 접근해 인공지능 캐릭터가
+찾고 있던 특성이 맞는지 이름을 확인합니다. 현재 단계에서는 적의 특성만을 출력하도록 했지만
+플레이어가 갑자기 적에게 달려들어 추적과 공격을 하는 구현을 추가할 수 있습니다.
+
+## 요약
+3장에서는 인공지능 캐릭터의 감각을 구현하는 개념을 소개했고 2개의 감각으로 시각과 촉각을 구현해봤습니다.
