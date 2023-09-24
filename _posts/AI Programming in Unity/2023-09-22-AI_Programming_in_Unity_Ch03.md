@@ -12,7 +12,7 @@ toc: true
 toc_sticky: true
  
 date: 2023-09-22
-last_modified_at: 2023-09-22
+last_modified_at: 2023-09-24
 ---
 
 🔔 유니티 게임 AI 프로그래밍 2/e 서적을 정리한 내용입니다. 🔔
@@ -190,3 +190,99 @@ public class Aspect : MonoBehaviour
 
 해당 스크립트는 플레이어 탱크에 연결하고 `aspectName`을 `Enemy`로 설정합니다.
 
+## 인공지능 캐릭터 생성
+인공지능 캐릭터는 씬 내에서 임의의 방향으로 돌아다니는데 여기에서는 2가지의 감각을 사용합니다.
+
+- 지정된 시야 범위와 일정 거리 이내에 적이 존재하는지 검사하는 시각
+- 인공지능 캐릭터를 포위할 적 특성을 갖는 개체가 박스 콜라이더와 충돌할 때 이를 감지할 촉각
+
+앞에서도 살펴본 것처럼 플레이어 탱크는 `Enemy` 특성을 가지므로, 인공지능 캐릭터는 플레이어 탱크를
+감지할 수 있습니다.
+
+```c#
+using UnityEngine;
+using System.Collections;
+
+public class Wander : MonoBehaviour
+{
+    private Vector3 tarPos;
+
+    private float movementSpeed = 5f;
+    private float rotSpeed = 2f;
+    
+    private float minX;
+    private float maxX;
+    private float minZ;
+    private float maxZ;
+
+    // 초기화에 사용
+    private void Start()
+    {
+        minX = -45f;
+        max = 45f;
+
+        minZ = -45f;
+        maxZ = 45f;
+
+        // 돌아다닐 위치 얻기
+        GetNextPosition();
+    }
+
+    // Update 는 초당 1회 호출됨
+    private void Update()
+    {
+        if(Vector3.Distance(tarPos, transform.position) <= 5f)
+            GetNextPosition();  // Generate new random position
+
+        // 목적지 방향으로의 회전을 위한 쿼터니온 설정
+        Quaternion tarRot = Quaternion.LookRotation(tarPos - transform.position);
+
+        // 회전과 트랜슬레이션 갱신
+        transform.rotation = Quaternion.Slerp(transform.rotation, tarRot, rotSpeed * Time.DeltaTime);
+        Transform.Translate(new Vector3(0, 0, movementSpeed * Time.DeltaTime));
+    }
+
+    private void GetNextPosition()
+    {
+        tarPos = new Vector3(Random.Range(minX, maxX), .5f, Random.Range(minZ, maxZ));
+    }
+}
+```
+`Wander` 스크립트는 인공지능 캐릭터가 현재 목적지에 도달할 때마다 새로운 임의의 지점을 
+지정된 영역 내에서 생성합니다. 이후 `Update` 메소드는 적을 회전시키고 새로운 목적지를 향해
+이동시킵니다. 이 스크립트를 인공지능 캐릭터에 연결하면 이제 씬 내에서 돌아다니는 모습을 볼 수 있습니다.
+
+## Sense 클래스 사용
+`Sense` 클래스는 다른 커스텀 감각을 구현할때 사용하는 인터페이스로, 2개의 가상 메소드
+`Initialize` 와 `UpdateSense`를 정의하고 있습니다. 이들 메소드는 커스텀 클래스에서 내용을 구현하며
+각기 `Start`와 `Update` 메소드에서 실행됩니다.
+
+```c#
+using UnityEngine;
+using System.Collections;
+
+public class Sense : MonoBehaviour
+{
+    public bool bDebug = true;
+    public Aspect.aspect aspectName = Aspect.aspect.Enemy;
+    public float detectionRate = 1f;
+
+    protected float elapsedTime = 0f;
+    
+    protected virtual void Initialize() { };
+    protected virtual void UpdateSense() { };
+
+    private void Start()
+    {
+        elapsedTime = 0f;
+        Initialize();
+    }
+
+    private void Update()
+    {
+        UpdateSense();
+    }
+}
+```
+기본 속성은 찾고자 하는 특성의 이름과 더불어 감지율도 포함하고 있습니다.
+이 스크립트는 어떤 오브젝트에도 연결되진 않습니다.
