@@ -88,3 +88,105 @@ NPC의 인공지능 수준은 전적으로 환경으로부터 얻는 정보의 �
 좀 더 실용적인 의사결정을 내리는 데는 큰 도움이 됩니다. 이런 부분에 대해서는 에이전트가 게임 내 설정상 전지적인
 능력을 갖추고 있다고 이해해도 큰 무리는 없습니다.
 
+## 플레이어 탱크와 특성 설정
+`Target` 오브젝트는 메시 렌더러를 사용하지 않는 간단한 구 형태의 오브젝트입니다. 또한 점 광원`point light`도 하나
+만들어서 `Target` 오브젝트의 자식으로 만듭니다. 다음은 `Target.cs` 파일 내의 코드입니다.
+
+```c#
+public class Target : MonoBehaviour
+{
+    public Transform targetMarker;
+
+    private void Update()
+    {
+        int button = 0;
+
+        // 마우스를 클릭하면 충돌 지점을 얻는다.
+        if(Input.GetMouseButtonDown(button))
+        {
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+            RaycastHit hitInfo;
+
+            if(physics.Raycast(ray.origin, ray.direction, out hitInfo))
+            {
+                Vector3 targetPosition = hitInfo.point;
+                targetMarker.position = targetPosition;
+            }
+        }
+    }
+}
+```
+
+해당 스크립트는 마우스 클릭 이벤트를 감지한 후 레이캐스팅 기법을 사용해서 3D 공간의 평면상에서 마우스가 클릭된 곳을 찾아냅니다.
+그 후 Target 오브젝트를 해당 위치로 이동시킵니다.
+
+## 플레이어 탱크 구현
+우리가 사용하는 탱크는 단순한 모델로 인공지능 캐릭터와 충돌 감지 및 처리를 위해서는 강체 컴포넌트가 필요합니다.
+이를 위해 `PlayerTank.cs` 를 생성해 맵 위에서 타겟 위치를 가져와서 목적지와 방향을 갱신합니다.
+
+``` c#
+using UnityEngine;
+using System.Collections;
+
+public class PlayerTank : MonoBehaviour
+{
+    public Transform targetTransform;
+    private float movementSpeed;
+    private float rotSpeed;
+
+    private void Start()
+    {
+        movementSpeed = 10f;
+        roSpeed = 2f;
+    }
+
+    private void Update()
+    {
+        // 타켓 위치 근처에 도달하면 일단 정지
+        if(Vector3.Distance(transform.position, targetTransform.position) < 5f)
+            return;
+
+        // 현재 위치로부터 타겟 위치로의 방향 벡터 계산
+        Vector3 tarPos = targetTransform.position;
+        tarPos.y = transform.position.y;
+        Vector3 dirRot = tarPos - transform.position;
+
+        // LookRotation 메소드를 사용해 이 새로운 회전 벡터를 위한 Quaternion 구성
+        Quaternion tarRot = Quaternion.LookRotation(dirRot);
+
+        // 보간법을 사용해서 이동하고 회전
+        transform.rotation = Quaternion.Slerp(transform.rotation, tarRot, rotSpeed * Time.DeltaTime);
+
+        transform.Translate(new Vector3(0, 0, monvementSpeed * Time.DeltaTime));
+    }
+}
+```
+
+이 스크립트는 맵상에서 `Target` 오브젝트의 위치를 가져와서 그것에 맞게 목적 지점과 방향을 갱신합니다.
+
+💡Target 오브젝트를 targetTransform 변수에 지정하는 것을 잊지 맙시다.
+{: .notice--info}
+
+## Aspect 클래스 구현
+Aspect 클래스는 매우 간단한 클래스로 단 하나의 퍼블릭 속성 `aspectName`을 가집니다. 인공지능 캐릭터가
+무언가를 감지할 때는 항상 `aspectName`을 검사해 인공지능 캐릭터가 찾고 있는 대상인지 검사할 예정입니다.
+
+```c#
+using UnityEngine;
+using System.Collections;
+
+public class Aspect : MonoBehaviour
+{
+    public enum aspect
+    {
+        Player,
+        Enemy,
+    }
+
+    public aspect aspectName;
+}
+```
+
+해당 스크립트는 플레이어 탱크에 연결하고 `aspectName`을 `Enemy`로 설정합니다.
+
