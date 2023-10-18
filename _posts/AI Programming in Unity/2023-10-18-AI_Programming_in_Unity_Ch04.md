@@ -191,3 +191,98 @@ public class VehicleFollowing : MonoBehaviour
 이번에 사용할 알고리즘은 아주 간단한 레이캐스팅 방식을 사용하기 때문에 경로 이동 중
 정면을 가로막는 장애물만 피해갈 수 있습니다.
 
+![image](https://github.com/GunnHB/gunnHB.github.io/assets/117302300/346a3aaa-fffb-4876-92b4-d2aa2375d5ef){: width="70%" height="70%"}
+![image](https://github.com/GunnHB/gunnHB.github.io/assets/117302300/1165f6e2-d5c6-40d0-bbe5-b9a0c5b0163b){: width="70%" height="70%"}
+
+씬 생성을 위해 몇 개의 큐브 개체를 생성하고 이를 빈 오브젝트 `Obstacle` 아래로 묶습니다.
+또한 `Agent` 라는 또 하나의 큐브 오브젝트를 생성하고 여기에 장애물 회피 스크립트를 연결합시다.
+
+`Agent` 는 제대로 된 경로탐색기가 아니므로 너무 많은 벽을 세우면 `Agent` 는 경로탐색이 어려울 수 있습니다.
+적절한 수의 벽을 세우고 `Agent` 의 움직임을 살펴봅시다.
+
+그리고 새로운 레이어 `Obstacle` 을 생성하여 장애물 오브젝트의 레이어로 지정해줍니다.
+
+![image](https://github.com/GunnHB/gunnHB.github.io/assets/117302300/ddd6e4a1-9999-41b6-904d-e17f29c36fc0){: width="70%" height="70%"}
+
+## 장애물 회피 로직 구현
+이제 규브 개체가 실제로 장애물을 피하도록 스크립트를 작성해봅시다.
+
+```c#
+using UnityEngine;
+using System.Collections;
+
+public class VehicleAvoidance : MonoBehaviour
+{
+    public float _speed = 20.0f;
+    public float _mass = 5.0f;
+    public float _force = 50.0f;
+    public float _minimunDistToAvoid = 20.0f;
+
+    // 차량의 실제 속도
+    private float _curSpeed;
+    private Vector3 _targetPoint;
+
+    private void Start()
+    {
+        _mass = 5.0f;
+        _targetPoint = Vector3.zero;
+    }
+
+    private void OnGUI()
+    {
+        GUILayout.Label("Click anywhere to move the vehicle");
+    }
+
+    private void Update()
+    {
+        // 차량은 마우스 클릭으로 이동
+        RaycastHit hit;
+        var ray = Camera.main.ScreenPointToRay(Input.mousePoisition);
+
+        if(Input.GetMouseButtonDown(0) && Physics.Raycast(ray, out hit, 100.0f))
+            _targetPoint = hit.point;
+
+        // 목표 지점을 향하는 방향 벡터
+        Vector3 dir = (_targetPoint - transform.position);
+        dir.Normalized();
+
+        // 장애물 회피 적용
+        AvoidObstacles(ref fir);
+
+        // 목표 지점에 도착하면 차량을 멈춘다.
+        if(Vector3.Distance(_targetPoint, transform.position) < 3.0f)
+            return;
+        
+        // 속도에 델타 타임을 적용한다.
+        _curSpeed = _speed * Time.deltaTime;
+
+        // 목표 방향 벡터로 차량을 회전시킨다.
+        var rot = Quaternion.LookRotation(dir);
+        transform.rotation = Quaternion.Slerp(transform.rotation, rot, 5.0f * Time.deltaTime);
+
+        // 차량을 전진시킨다.
+        transform.position += transform.forward * _curSpeed;
+    }
+
+    // 장애물 회피를 위해 새 방향 벡터를 계산
+    public void AvoidObstacles(ref Vector3 dir)
+    {
+        RaycastHit hit;
+
+        // Obstacle 레이어 검사 (해당 프로젝트에서는 8번)
+        // 비트마스크
+        int layerMask = 1 << 8;
+
+        // 회피 최소거리 이내에서 장애물과 차량이 출동했는지 검사 수행
+        if(Physics.Raycast(transform.position, transform.forward, out hit, _minimumDistToAvoid, layerMask))
+        {
+            // 새 방향을 계산하기 위해 충돌 지점에서 법선을 구한다.
+            Vector3 hitNormal = hit.normal;
+            hitNormal.y = 0.0f;     // Don't want to move in Y-Space
+
+            // 차량의 현재 전방 벡터에 force 를 더해 새로운 방향 벡터를 얻는다.
+            dir = transform.forward += hitNormal * _force;
+        }
+    }
+}
+```
