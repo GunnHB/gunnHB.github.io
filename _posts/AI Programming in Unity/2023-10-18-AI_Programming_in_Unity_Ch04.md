@@ -1,6 +1,6 @@
 ---
-title:  "[유니티 게임 AI 프로그래밍] 003. 센서 구현"
-excerpt: "센서를 구현해봅시다!"
+title:  "[유니티 게임 AI 프로그래밍] 004. 길 찾기"
+excerpt: "길 찾기 알고리즘에 대해 알아봅시다!"
 
 author: gunnHB
 categories: 
@@ -11,8 +11,8 @@ tags:
 toc: true
 toc_sticky: true
  
-date: 2023-09-22
-last_modified_at: 2023-09-24
+date: 2023-10-18
+last_modified_at: 2023-10-18
 ---
 
 🔔 유니티 게임 AI 프로그래밍 2/e 서적을 정리한 내용입니다. 🔔
