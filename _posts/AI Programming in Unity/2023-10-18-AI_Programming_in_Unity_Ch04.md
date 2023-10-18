@@ -286,3 +286,73 @@ public class VehicleAvoidance : MonoBehaviour
     }
 }
 ```
+
+## A* 길 찾기
+다음으로 유니티 환경에서 C# 을 사용해 A* 알고리즘을 구현해볼 예정입니다.
+길 찾기에는 다양한 방법이 존재하지만 A* 알고리즘이 갖는 단순함과 높은
+효율성의 장점 덕분에 게임이나 상호작용이 많은 애플리케이션에서 A* 길 찾기
+알고리즘을 널리 사용하고 있습니다.
+
+## A* 알고리즘 재확인
+A* 알고리즘을 적용하기 위해서는 일단 맵을 운행 가능한 데이터 구조로 표현해야 합니다.
+다양한 구조를 사용할 수 있지만, 이번 예제에서는 2차원 격자 배열을 사용합니다.
+
+두 개의 변수를 사용해 하나는 이미 처리한 노드를 저장하도록 하고 다른 하나는
+앞으로 처리해야 하는 노드를 저장하도록 한 후 이를 각각 닫힌 리스트와 열린 리스트로 
+부르도록 합시다.
+
+- `시작 노드`에서 시작하고 이를 `열린 목록`에 넣는다.
+- 열린 목록이 노드를 가지고 있는 한, 다음 과정을 수행한다.
+    1. 열린 리스트의 첫 노드를 가져와 이를 `현재 노드`로 유지한다.
+        - 이는 열린 리스트가 정렬된 상태며 첫 노드는 가장 비용이 낫다고 가정
+    2. 현재 노드의 이웃 중 `벽`이나 `대포`같이 통과할 수 없는 장애물 타입이 아닌 통과 가능한 노드를 가져온다.
+    3. 각 이웃 노드에 대해 이미 닫힌 리스트에 포함된 상태인지 확인한 후 닫힌 리스트에 포함된 상태가 아니면 다음 수식을 사용해서 이웃 노드의 총비용을 계산한다.
+        - `F = G + H`
+    4. 이 수식에서 `G`는 `이전 노드에서 현재 노드까지`의 총비용이며, `H`는 `현재 노드에서 목적 지점 노드까지`의 총비용이다.
+    5. 이웃 노드 오브젝트에 비용 데이터를 저장하고 현재 노드를 부모 노드로 저장한다. 나중에 이 부모 노드 데이터를 사용해서 실제 경로를 역추적하게 된다.
+    6. 이 이웃 노드를 열린 리스트에 넣고 열린 리스트를 목적 노드에 도달하는데 필요한 총비용 순으로 오름차순 정렬한다.
+    7. 처리할 이웃 노드가 더 없다면 현재 노드를 닫힌 리스트에 넣고 열린 리스트에서 제거한다.
+    8. `2 단계`로 돌아간다.
+
+이 과정을 마치면 현재 노드는 대상 목표 지정 노드의 위치에 놓이게 되는데 이는 시작 지점에서 목표 지점으로 향하는 길이 장애물로
+원천봉쇄되지 않았다는 가정하에만 유효합니다.
+
+## 구현
+### 노드 클래스 구현
+`Node` 클래스는 각 타일 오브젝트를 2차원 격자로 다루면서 맵을 표현합니다.
+```c#
+using UnityEngine;
+using System.Collections;
+using System;
+
+public class Node : IComparable
+{
+    public float _nodeTotalCost;
+    public float _estimatedCost;
+    public bool _bObstacle;
+    public Node _parent;
+    public Vector3 _position;
+
+    public Node()
+    {
+        this._nodeTotalCost = 0.0f;
+        this._estimatedCost = 1.0f;
+        this._bObstacle = false;
+        this._parent = null;
+    }
+
+    public Node(Vector3 pos)
+    {
+        this._nodeTotalCost = 1.0f;
+        this._estimatedCost = 0.0f;
+        this._bObstacle = false;
+        this._parent = null;
+        this._position = pos;
+    }
+
+    public void MarkAsObstacle()
+    {
+        this._bObstacle = true;
+    } 
+}
+```
