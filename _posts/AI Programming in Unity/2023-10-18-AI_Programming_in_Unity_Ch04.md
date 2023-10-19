@@ -12,7 +12,7 @@ toc: true
 toc_sticky: true
  
 date: 2023-10-18
-last_modified_at: 2023-10-18
+last_modified_at: 2023-10-19
 ---
 
 🔔 유니티 게임 AI 프로그래밍 2/e 서적을 정리한 내용입니다. 🔔
@@ -354,5 +354,257 @@ public class Node : IComparable
     {
         this._bObstacle = true;
     } 
+}
+```
+
+Node 클래스는 비용과 장애물 여부 플래그, 위치, 부모 노드 등의 정보를 다루기 위한 속성을 포함합니다.
+`_nodeTotalCost`는 G로 시작 위치에서 현재 노드까지의 이동 비용이며, `_estimatedCost`는 H로
+현재 노드에서 대상 목표 노드까지의 총 추정 비용입니다. 그리고 두 개의 간단한 생성자 메소드와 
+해당 노드의 장애물 여부 설정을 위한 `wrapper` 메소드를 하나 가집니다. 그 후 다음 코드처럼 `CompareTo`
+메소드를 구현합니다.
+
+```c#
+public int CompareTo(object obj)
+{
+    Node node = (Node)obj;
+    
+    // 음수 값은 오브젝트가 정렬된 상태에서 현재보다 앞에 있음을 의미
+    if(this._estimatedCost < node._estimatedCost)
+        return -1;
+    
+    // 양수 값을 오브젝트가 정렬된 상태에서 현재보다 뒤에 있음을 의미
+    if(this._estimatedCost > node._estimatedCost)
+        return 1;
+
+    return 0;
+}
+```
+
+`CompareTo` 메소드를 `오버라이드` 하기 위해 Node zmffotmsms `IComparable`을 상속받았습니다.
+이것은 총 예상 비용을 기준으로 노드 배열의 목록을 정렬해야 하기 때문입니다.
+`ArrayList` 타입은 `Sort` 메소드를 포함하는데, 이는 기본적으로 리스트 내의 모든 오브젝트 내에 
+구현된 `CompareTo` 메소드를 사용합니다.
+
+### 우선순위 큐 구성
+`PriorityQueue`는 짧고 간단한 클래스로 노드와 ArrayList를 쉽게 다루고자 할 때 사용합니다.
+
+```c#
+using UnityEngine;
+using System.Collections;
+
+public class PriorityQueue
+{
+    private ArrayList _nodes = new ArrayList();
+
+    public int Length => this._nodes.Count;
+
+    public bool Contains(object node)
+    {
+        return this._nodes.Contains(node);
+    }
+
+    public Node First()
+    {
+        if(this._nodes.count > 0)
+            return (Node)this._nodes[0];
+
+        return null;
+    }
+
+    public void Push(Node node)
+    {
+        this._nodes.Add(node);
+        this._nodes.Sort();
+    }
+
+    public void Remove(Node node)
+    {
+        this._nodes.Remove(node);
+        
+        // 리스트를 확실하게 정렬
+        this._nodes.Sort();
+    }
+}
+```
+코드는 간단합니다. 한가지 주의해야할 점은 ArrayList에 노드를 추가하거나 제거할 때 
+`Sort` 메소드를 실행해주어야 합니다. 이는 내부적으로 Node 오브젝트의 CompareTo 메소드를
+호출해 `_estimatedCost` 값에 따라 노드를 정렬합니다.
+
+### 그리드 매니저 설정
+`GridManager` 클래스는 맵을 표현하는 모든 격자의 속성을 다룹니다.
+맵을 표현하는데는 하나의 오브젝트만 필요하므로 `GridManager` 클래스를 `싱글톤Singleton`
+인스턴스로 유지합니다.
+
+```c#
+using UnityEngine;
+using System.Collections;
+
+public class GridManager : MonoBehaviour
+{
+    private static GRidManager _instance = null;
+
+    // 씬에서 GridManager 오브젝트를 찾아본 후 이미 있으면 이를 _instance 스태틱 변수에 할당해 관리한다.
+    public static GridManager Instance
+    {
+        get
+        {
+            if(_instance == null)
+            {
+                _instance = FinObjectOfType(typeof(GridManager)) as GridManager;
+
+                if(_instance == null)
+                    Debug.Log("Could nor locate a GridManager object.\n" +
+                              "You have to gave exactly one GridManager in the scene");
+            }
+
+            return _instance;
+        }
+    }
+
+    // 열과 행의 수, 각 격자 타일의 크기, 격자와 장애물을 시각화하는 데 필요한 bool 변수
+    // 격자에 있는 모든 노드 등 맵을 표현할 때 필요한 모든 변수를 선언
+    public int _numOfRows
+    public int _numOfColumns;
+    public float _gridCellSize;
+    public bool _showGrid;
+    public bool _showObstacleBlocks = true;
+    
+    private Vector3 _origin = new Vector3();
+    private GameObject[] _obstacleList;
+
+    public Node[,] _nodes {get; set;}
+    public Vector3 Origin
+    {
+        get => _origin;
+    }
+
+    private Awake()
+    {
+        _obstacleList = GameObject.FindGameObjectsWithTag("Obstacle");
+        CalculateObstacles();
+    }
+
+    private void CalculateObstacles()
+    {
+        _nodes = new Node[_numOfColumns, _numOfRows];
+
+        int index = 0;
+
+        for(int col = 0; col < _numOfColumns; col++)
+        {
+            for(int row = 0; row <_numOfRows; row++)
+            {
+                Vector3 cellPos = GetGridCellCenter(index);
+                Node node = new Node(cellPos);
+                nodes[col, row] = node;
+                index++;
+            }
+        }
+
+        if(_obstacleList != null && _obstacleList.Length > 0)
+        {
+            // 맵에서 발견한 각 장애물을 리스트에 기록한다.
+            foreach(GameObject data in _obstacleList)
+            {
+                int indexCell = GetGridIndex(data.transform.position);
+                int col = GetColumn(indexCell);
+                int row = GetRow(indexCell);
+                nodes[row, col].MarkAsObstacle();
+            }
+        }
+    }
+
+    public Vector3 GetGridCellCenter(int index)
+    {
+        Vector3 cellPosition = GetGridCellPosition(index);
+        cellPosition.x += (_gridCellSize / 2.0f);
+        cellPosition.z += (_gridCellSize / 2.0f);
+
+        return cellPosition;
+    }
+
+    public Vector3 GetGridCellPosition(int index)
+    {
+        int row = GetRow(index);
+        int col = GetColumn(index);
+        float xPosInGrid = col * _gridCellSize;
+        float zPosinGrid = row * _gridCellSize;
+
+        return Origin + new Vector3(xPosInGrid, 0.0f, zPosinGrid);
+    }
+
+    public int GetGridIndex(Vector3 pos)
+    {
+        if(!IsInBound(pos))
+            return -1;
+
+        pos -= Origin;
+        int col = (int)(pos.x / gridCellSize);
+        int row = (int)(pos.z / gridCellSize);
+
+        return (row * _numColumns + col);
+    }
+
+    public bool IsInBounds(Vector3 pos)
+    {
+        float width = _numOfColumns * _gridCellSize;
+        float height = _numOfRows * gridCellSize;
+
+        return (pos.x >= Origin.x && pos.x < Origin.x + width && posx <= Origin.z + height && pos.z >= Origin.z);
+    }
+
+    public int GetRow(int index)
+    {
+        int row = index / _numOfColumns;
+
+        return row;
+    }
+
+    public int GetColumn(int index)
+    {
+        int col = index % _numOfColumns;
+
+        return col;
+    }
+
+    public void GetNeighbours(Node node, ArrayList neighbors)
+    {
+        Vector3 neighborPos = node.Position;
+        int neighborIndex = GetGridIndex(neighborPos);
+
+        int row = GetRow(neighborIndex);
+        int column = GetColumn(neighborIndex);
+
+        // 아래
+        int leftNodeRow = row + 1;
+        int leftNodeColumn = column;
+        AssignNeighbour(leftNodeRow, leftNodeColumn, neighbors);
+
+        // 위
+        leftNodeRow = row + 1;
+        leftNodeColumn = column;
+        AssignNeighbour(leftNodeRow, leftNodeColumn, neighbors);
+
+        // 오른쪽
+        leftNodeRow = row;
+        leftNodeColumn = column + 1;
+        AssignNeighbour(leftNodeRow, leftNodeColumn, neighbors);
+
+        // 왼쪽
+        leftNodeRow = row;
+        leftNodeColumn = column - 1;
+        AssignNeighbour(leftNodeRow, leftNodeColumn, neighbors);
+    }
+
+    private void AssignNeighbour(int row, int column, ArrayList neighbors)
+    {
+        if(row != -1 && column != -1 && row < _numOfRows && column <_numOfColumns)
+        {
+            Node nodeToAdd = nodes[row, column];
+
+            if(!nodeToAdd.bObstacle)
+                neighbors.Add(nodeToAdd);
+        }
+    }
 }
 ```
