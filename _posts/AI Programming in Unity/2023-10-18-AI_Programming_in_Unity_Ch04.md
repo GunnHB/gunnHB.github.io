@@ -27,7 +27,6 @@ last_modified_at: 2023-10-19
 
 - 길 찾기와 조향
 - 커스텀 A* 길 찾기 구현
-- 유니티 내장 NavMesh
 </div>
 
 ## 경로 따라가기
@@ -608,3 +607,103 @@ public class GridManager : MonoBehaviour
     }
 }
 ```
+
+### A* 구현 심화
+`Astar` 클래스는 지금까지 구현한 클래스를 실제로 활용하는 핵심 클래스입니다.
+
+```c#
+using UnityEngine;
+using System.Collections;
+
+public class AStar
+{
+    public static PriorityQueue _closedList;
+    public static PriorityQueue _openList;
+
+    // 두 노드 사이의 비용을 계산하기
+    // 현재 노드와 목적지 노드 사이의 거리를 구한다.
+    private static float HeuristicEstimateCost(Node curNode, Node goalNode)
+    {
+        Vector3 vecCost = curNode._position - goalNode._position;
+
+        return vecCost.magnitude;
+    }
+    
+    public static ArrayList FindPath(Node start, Node goal)
+    {
+        _openList = new PriorityQueue();
+        _openList.Push(start);
+        start._nodeTotalCost = 0.0f;
+        start._estimatedCost = HeuristicEstimateCost(start, goal);
+
+        _closedList = new PriorityQueue();
+        Node node = null;
+
+        while(_openList.Length != 0)
+        {
+            node = _openList.First();
+
+            // 현재 노드가 목적지 노드인지 확인
+            if(node._position == goal._position)
+                return CalculatePath(node);
+
+            // 이웃 노드를 저장하기 위해 ArrayList를 생성
+            ArrayList neighbours = new ArrayList();
+
+            GridManager.Instance.GetNeighbours(node, neighbours);
+
+            for(int index = 0; index < neighbours.Count; index++)
+            {
+                Node neighbourNode = (Node)neighbours[index];
+
+                if(!_closedList.Contains(neighbours[index]))
+                {
+                    float cost = HeuristicEstimateCost(node, neighbourNode);
+                    
+                    float totalCost = node._nodeTotalCost + cost;
+                    float neighbourNodeEstCost = HeuristicEstimateCost(neighbourNode, goal);
+
+                    neighbourNode._nodeTotalCost = totalCost;
+                    neighboursNode._parent = node;
+                    neighboursNode._estimatedCost = totalCost + neighbourNodeEstCost;
+
+                    if(!_openList.Contains(neighbourNode))
+                        _openList.Push(neighbourNode);
+                }
+            }
+
+            // 현재 노드를 _closedList 에 추가
+            _closedList.Push(node);
+            // 그리고 _openList 에서는 제거
+            _openList.Remove(node);
+        }
+
+        if(node._position != goal._position)
+        {
+            Debug.LogError("Goal not found");
+
+            return null;
+        }
+
+        return CalculatePath(node);
+    }
+
+    private static ArrayList CalculatePath(Node node)
+    {
+        ArrayList list = new ArrayList();
+
+        while(node != null)
+        {
+            list.Add(node);
+            node = node._parent;
+        }
+
+        list.Reverse();
+        
+        return list;
+    }
+}
+```
+
+## 요약
+4장에서는 간단한 웨이포인트 기반의 방식으로 시작해서 간단한 A* 길 찾기 시스템을 만들어봤습니다.
