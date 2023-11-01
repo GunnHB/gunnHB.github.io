@@ -12,7 +12,7 @@ toc: true
 toc_sticky: true
  
 date: 2023-10-30
-last_modified_at: 2023-10-30
+last_modified_at: 2023-11-01
 ---
 
 🔔 유니티 게임 AI 프로그래밍 2/e 서적을 정리한 내용입니다. 🔔
@@ -304,6 +304,138 @@ public class UnityFlockController : MonoBehaviour
         float posZ = Random.Range(_initialPosition.z - _bound.z, _initialPosition.z + _bound.z);
 
         _nextMovementPoint = _initialPosition + new Vector3(posX, posY, posZ);
+    }    
+}
+```
+
+## 대체 구현 사용
+좀 더 간단한 군집 알고리즘을 살펴봅시다. 구현을 위해서는 `개별 boid 동작`과 `컨트롤러 동작`을 처리하는
+두 개의 컴포넌트가 필요합니다. 나머지 모든 boid는 컨트롤러를 따라 이동합니다.
+
+```c#
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class Flock : MonoBehaviour
+{
+    internal FlockController _controller;
+    public Rigidbody _rigidBody;
+
+    private void Update()
+    {
+        if (_controller)
+        {
+            Vector3 relativePos = Steer() * Time.deltaTime;
+
+            if (relativePos != Vector3.zero)
+                _rigidBody.velocity = relativePos;
+
+            // boid의 최소와 최대 속도를 강제한다.
+            float speed = _rigidBody.velocity.magnitude;
+
+            if (speed > _controller._maxVelocity)
+                _rigidBody.velocity = _rigidBody.velocity.normalized * _controller._maxVelocity;
+            else if (speed < _controller._minVelocity)
+                _rigidBody.velocity = _rigidBody.velocity.normalized * _controller._minVelocity;
+        }
+    }
+
+    private Vector3 Steer()
+    {
+        Vector3 center = _controller._flockCenter - transform.localPosition;             // 응집
+        Vector3 velocity = _controller._flockVelocity = _rigidBody.velocity;              // 정렬
+        Vector3 follow = _controller._target.localPosition - transform.localPosition;    // 리더 추종
+        Vector3 separation = Vector3.zero;
+
+        foreach (Flock flock in _controller._flockList)
+        {
+            if (flock != this)
+            {
+                Vector3 relativePos = transform.localPosition - flock.transform.localPosition;
+
+                separation += relativePos / (relativePos.sqrMagnitude);
+            }
+        }
+
+        // 무작위화
+        Vector3 randomize = new Vector3((Random.value * 2) - 1, (Random.value * 2) - 1, (Random.value * 2) - 1);
+        randomize.Normalize();
+
+        return (_controller._centerWeight * center +
+                _controller._velocityWeight * velocity +
+                _controller._separationWeight * separation +
+                _controller._followWeight * follow +
+                _controller._randomizeWeight * randomize);
     }
 }
+```
+
+## FlockController 구현
+`FlockController`는 런타임에 boid를 생성하고 군집의 평균 속도와 중심의 위치를 갱신합니다.
+
+```c#
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class FlockController : MonoBehaviour
+{
+    public float _minVelocity = 1;          // 최저 속도
+    public float _maxVelocity = 8;          // 최고 군집 속력
+    public int _flockSize = 20;             // 그룹 내에 있는 군집의 수
+
+    // boid가 중앙에서 어느 정도까지 떨어질 수 있는지 지정
+    // weight가 클수록 중앙에 근접
+    public float _centerWeight = 1;
+
+    public float _velocityWeight = 1;       // 정렬 동작
+
+    // 군집 내에서 개별 boid 간의 거리
+    public float _separationWeight = 1;
+
+    // 개별 boid와 리더 간의 거리 (weight가 클수록 가깝게 따라감)
+    public float _followWeight = 1;
+
+    // 추가적인 임의성 제공
+    public float _randomizeWeight = 1;
+
+    public Flock _prefab;
+    public Transform _target;               // 리더 저장
+
+    // 그룹 내 군집의 중앙 위치
+    internal Vector3 _flockCenter;
+    internal Vector3 _flockVelocity;        // 평균 속도
+
+    public ArrayList _flockList = new();
+
+    private void Start()
+    {
+        for (int index = 0; index < _flockSize; index++)
+        {
+            Flock flock = Instantiate(_prefab, transform.position, transform.rotation) as Flock;
+
+            flock.transform.parent = transform;
+            flock._controller = this;
+            _flockList.Add(flock);
+        }
+    }
+
+    private void Update()
+    {
+        // 전체 군집 그룹의 중앙 위치와 속도를 계산
+        Vector3 center = Vector3.zero;
+        Vector3 velocity = Vector3.zero;
+
+        foreach (Flock flock in _flockList)
+        {
+            center += flock.transform.localPosition;
+            velocity = flock._rigidBody.velocity;
+        }
+
+        _flockCenter = center / _flockSize;
+        _flockVelocity = velocity / _flockSize;
+    }
+}
+
 ```
