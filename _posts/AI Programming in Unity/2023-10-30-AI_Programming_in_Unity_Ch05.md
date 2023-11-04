@@ -12,7 +12,7 @@ toc: true
 toc_sticky: true
  
 date: 2023-10-30
-last_modified_at: 2023-11-01
+last_modified_at: 2023-11-04
 ---
 
 🔔 유니티 게임 AI 프로그래밍 2/e 서적을 정리한 내용입니다. 🔔
@@ -437,5 +437,61 @@ public class FlockController : MonoBehaviour
         _flockVelocity = velocity / _flockSize;
     }
 }
-
 ```
+
+다음 `TargetMovement.cs`는 이동할 모교로 근처의 임의 지점을 선택합니다. 목표 지점에 근접하면 새로운 지점을
+하나 선택하며, boid는 다시 이 목표를 향해 따라 이동합니다.
+
+```c#
+using System.Collections;
+using System.Collections.Generic;
+using System.Timers;
+using UnityEngine;
+
+public class TargetMovement : MonoBehaviour
+{
+    // 타겟을 원의 접선 속도로 이동시킨다.
+    public Vector3 _bound;
+    public float _speed = 100.0f;
+
+    private Vector3 _initialPosition;
+    private Vector3 _nextMovementPoint;
+
+    private void Start()
+    {
+        _initialPosition = transform.position;
+        CalculateNextMovementPoint();
+    }
+
+    private void CalculateNextMovementPoint()
+    {
+        float posX = Random.Range(_initialPosition.x = _bound.x, _initialPosition.x + _bound.x);
+        float posY = Random.Range(_initialPosition.y = _bound.y, _initialPosition.y + _bound.y);
+        float posZ = Random.Range(_initialPosition.z = _bound.z, _initialPosition.z + _bound.z);
+
+        _nextMovementPoint = _initialPosition + new Vector3(posX, posY, posZ);
+    }
+
+    private void Update()
+    {
+        transform.Translate(Vector3.forward * _speed * Time.deltaTime);
+        transform.rotation = Quaternion.Slerp(transform.rotation,
+                                              Quaternion.LookRotation(_nextMovementPoint - transform.position),
+                                              1.0f * Time.deltaTime);
+
+        if (Vector3.Distance(_nextMovementPoint, transform.position) <= 10.0f)
+            CalculateNextMovementPoint();
+    }
+}
+```
+
+코드를 실행하면 군집을 이룬 boid가 목표를 향해 멋지게 날아갈 것입니다!
+
+## 요약
+5장에서는 두 가지 형태의 군집 처리 방식을 배웠습니다.
+
+- 유니티가 제공하는 `Tropical Island Demo` 프로젝트의 군집 알고리즘 구현
+- 강체를 사용해 군집 내 개체의 이동을 처리하고 구 콜라이더를 사용해 군집 내
+  개체끼리의 충돌을 피하는 법
+
+6장에서는 행동 트리 패턴에 대해 살펴보고 직접 자신만의 버전을 구현하는 법을 배워봅시다!
