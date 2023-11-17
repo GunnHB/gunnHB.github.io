@@ -107,3 +107,247 @@ PC의 성능이 좋아지고 게임 콘솔과 모바일 기기가 발전함에 �
 행동이 될 수 있습니다. 에이전트가 가질 수 있는 모든 로직을 표현할 수 있다는 점에서 매우 유용합니다.
 이는 걷기, 발사, 공격 등의 행동을 정의할 수 있으며, 어떤 제약도 가지지 않습니다.
 단지 계층의 말단 노드라는 특성만 있을 뿐 3가지의 행동 중 하나를 반환합니다.
+
+## 기반 Node 클래스 구현
+모든 노드에서 필요로 하는 `기반 기능`이 존재합니다. 우리가 만들 간단한 프레임워크는
+모둔 기반 추상 Node.cs 클래스를 상속받을 예정입니다. 이 클래스는 다른 모든 노드 타입의 기반입니다.
+
+```c#
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace BehaviorTree
+{
+    public enum NodeStates
+    {
+        None,
+        Success,
+        Failure,
+        Running,
+    }
+
+    [System.Serializable]
+    public abstract class Node : MonoBehaviour
+    {
+        // 노드의 상태를 반환하는 델리게이트
+        public delegate NodeStates NodeReturn();
+
+        // 현재 노드의 상태
+        protected NodeStates _nodeState;
+        public NodeStates NodeState => _nodeState;
+
+        // 노드 생성자
+        public Node() { }
+
+        // 원하는 조건 세트를 평가하기 위해 이 메소드를 구현
+        public abstract NodeStates Evaluate();
+    }
+}
+```
+
+## 노드를 셀렉터로 확장
+```c#
+using System.Collections;
+using System.Collections.Generic;
+using BehaviorTree;
+
+using UnityEngine;
+
+public class Selector : Node
+{
+    // 셀렉터의 자식 노드들
+    protected List<Node> _nodes = new();
+
+    // 셀렉터는 자식 노드의 목록을 필요로 합니다.
+    public Selector(List<Node> nodes)
+    {
+        _nodes = nodes;
+    }
+
+    // 자식 중 하나가 성공을 보고하면 셀렉터는 즉시 상위로 성공을 보고합니다.
+    // 만일 모든 자식이 실패를 보고하면 상위에 실패를 보고합니다.
+    public override NodeStates Evaluate()
+    {
+        foreach (Node node in _nodes)
+        {
+            switch (node.Evaluate())
+            {
+                case NodeStates.Success:
+                    _nodeState = NodeStates.Success;
+                    return _nodeState;
+                case NodeStates.Failure:
+                    continue;
+                case NodeStates.Running:
+                    _nodeState = NodeStates.Running;
+                    return _nodeState;
+                default:
+                    continue;
+            }
+        }
+
+        _nodeState = NodeStates.Failure;
+        return _nodeState;
+    }
+}
+```
+`Evaluate` 메서드의 구현부를 확인해봅시다. 모든 자식 노드를 돌며 개별 결과를 확인합니다.
+만약 자식 중 하나가 실패를 반환한다고 해도 셀렉터는 검사를 계속 진행합니다. 진행 중
+성공을 반환하는 노드가 있다면 그 즉시 검사를 종료하여 상위에 성공을 보고합니다.
+만일 모든 자식 노드가 실패를 반환했다면 셀렉터 역시 상위에 실패를 반환합니다.
+
+## 시퀀스
+시퀀스는 셀렉터와 구현이 매우 유사합니다. 다만 앞서 배웠던 것처럼 결과의 반환 방식이
+다르다는 것을 염두에 두고 코드를 확인합시다.
+
+```c#
+using System.Collections;
+using System.Collections.Generic;
+using BehaviorTree;
+using UnityEngine;
+
+public class Sequence : Node
+{
+    // 시퀀스에 속하는 자식 노드들
+    private List<Node> _nodes = new();
+
+    // 초기에 자식 목록을 제공해야합니다.
+    public Sequence(List<Node> nodes)
+    {
+        _nodes = nodes;
+    }
+
+    // 하나의 자식 노드라도 실패를 반환하면 전체 노드는 실패합니다.
+    // 모든 자식 노드가 성공을 반환하면 노드는 성공을 보고합니다.
+    public override NodeStates Evaluate()
+    {
+        bool anyChildRunning = false;
+
+        foreach (var node in _nodes)
+        {
+            switch (node.NodeState)
+            {
+                case NodeStates.Success:
+                    continue;
+                case NodeStates.Failure:
+                    _nodeState = NodeStates.Failure;
+                    return _nodeState;
+                case NodeStates.Running:
+                    anyChildRunning = true;
+                    continue;
+                default:
+                    _nodeState = NodeStates.Success;
+                    return _nodeState;
+            }
+        }
+
+        _nodeState = anyChildRunning ? NodeStates.Running : NodeStates.Success;
+        return _nodeState;
+    }
+}
+```
+시퀀스는 전체 자식이 성공을 반환해야 성공을 보고합니다. 검사 중 실패한 자식을 발견하면
+즉시 검사를 종료하고 실패를 반환합니다. 만일 Running 상태인 자식이 있다면 부모 노드 역시
+Running 상태를 반환하여 트리를 다시 평가합니다.
+
+## 인버터 데코레이터 구현
+Inverter.cs의 구조는 약간 다르지만 나머지 노드처럼 역시 Node를 상속받습니다.
+
+```c#
+using System.Collections;
+using System.Collections.Generic;
+using BehaviorTree;
+using UnityEngine;
+
+public class Inverter : Node
+{
+    // 평가할 자식 노드
+    // 데코레이터 노드는 자식이 하나입니다.
+    private Node _node;
+    public Node ThisNode => _node;
+
+    // 생성자는 이 인버터 데코레이터가 감쌀 자식 노드를 필요로 합니다.
+    public Inverter(Node node)
+    {
+        _node = node;
+    }
+
+    // 자식이 실패하면 성공을 보고하고 자식이 성공하면 실패를 보고합니다.
+    // Running은 그대로 보고합니다.
+    // 금쪽이같습니다.
+    public override NodeStates Evaluate()
+    {
+        switch (_node.NodeState)
+        {
+            case NodeStates.Success:
+                _nodeState = NodeStates.Failure;
+                return _nodeState;
+            case NodeStates.Failure:
+                _nodeState = NodeStates.Success;
+                return _nodeState;
+            case NodeStates.Running:
+                _nodeState = NodeStates.Running;
+                return _nodeState;
+        }
+
+        _nodeState = NodeStates.Success;
+        return _nodeState;
+    }
+}
+```
+
+## 일반 액션 노드 생성
+이제 구현할 ActionNode.cs는 로직을 델리게이트로 전달하기 위한 일반 리프 노드입니다.
+현재의 예제는 델리게이트에 맞는 어떤 메서드라도 전달할 수 있다는 점에서 유연하지만
+파라미터를 가지지 않는 델리게이트라는 점에 제약적입니다.
+
+```c#
+using System.Collections;
+using System.Collections.Generic;
+using BehaviorTree;
+using UnityEngine;
+
+public class ActionNode : Node
+{
+    // 액션에 대한 메서드 시그니처
+    public delegate NodeStates ActionNodeDelegate();
+
+    // 이 노드를 평가할 때 호출하는 델리게이트
+    private ActionNodeDelegate _action;
+
+    // 이 노드는 아무런 로직을 포함하지 않으므로
+    // 델리게이트 형태로 로직이 전달돼야 합니다.
+    // 시그니처에 나와 있듯이 액션은 NodeState 열거형을 반환해야 합니다.
+    public ActionNode(ActionNodeDelegate action)
+    {
+        _action = action;
+    }
+
+    public override NodeStates Evaluate()
+    {
+        switch (_action())
+        {
+            case NodeStates.Success:
+                _nodeState = NodeStates.Success;
+                return _nodeState;
+            case NodeStates.Failure:
+                _nodeState = NodeStates.Failure;
+                return _nodeState;
+            case NodeStates.Running:
+                _nodeState = NodeStates.Running;
+                return _nodeState;
+            default:
+                _nodeState = NodeStates.Failure;
+                return _nodeState;
+        }
+    }
+}
+```
+이 노드의 동작을 책임지는 것은 `_action` 델리게이트입니다. 생성자는 `NodeStates`를 반환하는
+스그니처에 맞는 메서드 전달을 요구합니다. 조건만 만족하면 어떤 로직이던 구현할 수 있습니다.
+
+## 요약
+6장에서는 행동 트리의 전체적인 동작 방식에 대해 살펴봤고 행동 트리를 구성하는 각 노드의
+개별 타입에 대해서도 다뤘으며 상황에 따라 어떤 타입의 노드를 사용하는 것이 더 유용한지도 살펴봤습니다.
+
+7장에서는 6장에서 배운 개념에 복잡도를 높이고 다양한 기능을 추가하는 방법을 다룰 예정입니다.
