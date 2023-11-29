@@ -31,8 +31,8 @@ last_modified_at: 2023-11-21
 </div>
 
 ## 퍼지 로직 정의
-바이너리 로직은 참 또는 거짓, 0 또는 1처럼 양자택일의 형태를 띄고 있다면
-퍼지 로직은 0 과 1 사이의 부동소수 데이터를 이용하여 훨씬 다양한 가능성을 가집니다.
+`바이너리 로직`은 참 또는 거짓, 0 또는 1처럼 양자택일의 형태를 띄고 있다면
+`퍼지 로직`은 0 과 1 사이의 부동소수 데이터를 이용하여 훨씬 다양한 가능성을 가집니다.
 
 퍼지 로직은 특정하지 않은 데이터에 기반해 의사 경정을 내립니다. 온도를 예로 든다면,
 맑은 여름날 캘리포니아는 구체적으로 온도르 재보지 않아도 따뜻하다는 사실을 알 수 있습니다.
@@ -56,7 +56,7 @@ last_modified_at: 2023-11-21
 퍼지 로직으로 표현할 수 있습니다.
 
 ## 바이너리 시스템 대신 퍼지 시스템 얻기
-당연히도 퍼지 로직을 사용하는 것은 많은 비용이 들어갑니다. 그렇기에 선별적인 사용이 필요합니다.
+당연히도 퍼지 로직을 사용하는 것은 `많은 비용`이 들어갑니다. 그렇기에 선별적인 사용이 필요합니다.
 물론 복잡한 시스템이 항상 좋은 것은 아니기에 게임의 특성에 따라 바이너리 시스템이 더 유리할 수 있습니다.
 
 "단순할수록 좋다. 하지만 너무 단순해서는 안된다." 라는 격언의 의미를 생각해보면 좋습니다.
@@ -96,5 +96,100 @@ if(healthPoints <= 50>)
 ```
 
 밥의 체력이 2가지 상태 중 하나를 가지는 것을 볼 수 있습니다. 물론 해당 스크립트는 아무 문제가 없습니다.
-하지만 퍼지 로직을 사용했을 때 동일한 시나리오가 어떻게 바뀌는지 확인해봅시다. 일단 밥의 체력 상태부터 결정해봅시다.
+하지만 퍼지 로직을 사용했을 때 동일한 시나리오가 어떻게 바뀌는지 확인해보겠습니다. 일단 밥의 체력 상태부터 결정해봅시다.
 
+![image](https://github.com/GunnHB/gunnHB.github.io/assets/117302300/7fe85b82-4af9-4f28-91ac-9d66e86c4ba2){: width="70%" height="70%"}
+
+해당 차트가 어떻게 구성됐는지는 크게 신경쓸 필요는 없습니다. 보시다시피 간단한 선형 함수로
+이루어져 있습니다. 사실 그다지 퍼지스럽지 않지만 바이너리 시스템보단 분명 발전된 형태입니다.
+
+멤버십 함수라는 개념도 살펴봅시다. 이 개념은 우리 시스템의 핵심 중 하나로 진정한 상태 판정에 도움을 줍니다.
+예를 들어 밥이 마법을 사용하지 판단할 때 단순한 하나의 값에 의존하는 것이 아니라 정보를 몇 개의 논리적 단위로
+나눈 후 이 정보들을 조합해 상황을 판단하도록 합니다.
+
+위 예제에서 3가지 상태를 비교하고 평가해 종합적인 결론을 도출할 수 있습니다.
+
+- 밥이 위험한 상태에 놓여 있다.
+- 밥이 다쳤다.
+- 밥이 건강하다.
+
+이를 전문용어로 설정해야 하는 멤버십의 수준이라고 부릅니다. 일단 이 정보를 알아내면 에이전트는 다음에
+어떤 행동을 해야 할지 결정할 수 있게 됩니다.
+
+그림을 보면 동시에 두 개의 상태가 참이 될 수 있음을 알 수 있습니다.
+
+- 위기 상태이면서 다침
+- 건강한 상태이면서 다침
+
+수직 값은 참의 수준을 나타내며 0부터 1 사이의 부동소수 값을 가집니다.
+
+- 체력이 0%면 위기 상태 평가 값은 1이다. 이는 밥의 체력이 완전히 소진된 상태를 의미한다.
+- 체력이 40%면 밥이 완전히 다친 상태다.
+- 체력이 100%면 밥이 완전히 건강한 상태다.
+
+위와 같은 `정확한 참 상태가 아닌 상태`가 바로 퍼지 상태입니다. 예를 들어, 밥의 체력이
+65% 남았다고 하면 다음과 같이 시각화할 수 있습니다.
+
+![image](https://github.com/GunnHB/gunnHB.github.io/assets/117302300/92d75956-1e3f-472c-98e0-a838e2e815cf){: width="70%" height="70%"}
+
+이를 살펴보면 밥은 약간 다친 동시에 약간 건강한 것을 알 수 있습니다. 더 정확하게 말하자면
+밥은 37.5% 다쳤고 12.5% 건강하며 0%의 위기인 상태입니다. 이를 책에서 제공하는 씬에서
+살펴보면 다음과 같습니다.
+
+![image](https://github.com/GunnHB/gunnHB.github.io/assets/117302300/89dd6850-169f-4271-bb61-bd63671f4880){: width="70%" height="70%"}
+
+지금은 이 데이터를 이용하여 아무런 일도 하지 않지만 앞으로는 이 데이터를 가지고 모든 것을
+처리할 것입니다.
+
+```c#
+using UnityEngine;
+using UnityEngine.UI;
+using System.Collections;
+
+public class FuzzySample : MonoBehaviour
+{
+    private const string _labelText = "{0} true";
+
+    public AnimationCurve _criticalCurve;
+    public AnimationCurve _hurtCurve;
+    public AnimationCurve _healthyCurve;
+
+    public InputField _healthInput;
+
+    public Text _healthyLabel;
+    public Text _hurtLabel;
+    public Text _criticalLabel;
+
+    private float _criticalValue = 0f;
+    private float _hurtValue = 0f;
+    private float _healthyValue = 0f;
+
+    private void Start()
+    {
+        SetLabel();
+    }
+
+    public void EvaluateStatements()
+    {
+        if(string.IsNullOrEmpty(_healthInput.text))
+            return;
+
+        float inputValue = float.Parse(_healthInput.text);
+
+        _healthyValue = _healthyCurve.Evaluate(inputValue);
+        _hurtValue = _hurtCurve.Evaluate(inputValue);
+        _criticalValue = _criticalCurve.Evaluate(inputValue);
+
+        SetLebel();
+    }
+
+    private void SetLabel()
+    {
+        _healthyLabel.text = string.Format(_labelText, _healthyValue);
+        _hurtLabel.text = string.Format(_labelText, _hurtValue);
+        _criticalLabel.Text = string.Format(_labelText, _criticalValue);
+    }
+}
+```
+
+### 세트 확장
