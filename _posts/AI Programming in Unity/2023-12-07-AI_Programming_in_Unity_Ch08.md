@@ -108,3 +108,85 @@ public class LockedOnState : StateMachineBehaviour
 }
 ```
 
+상태에 진입하고 `OnStateEnter`가 호출됐을 때 플레이어에 대한 참조를 찾습니다. 이후 `LockedOn` 변수를 true로 설정해줍니다.
+
+상태에 머무르는 동안 `OnStateUpdate`는 매 프레임 호출됩니다. 이 메소드 내에서 `Animator` 참조를 통해 `Gun GameObject`에
+대한 참조를 얻습니다. 이 참조를 통해 `Transform.LookAt`을 사용해서 총이 플레이어를 추적하도록 합니다.
+
+마지막으로 상태를 빠져나올 때 `OnStateExit`가 호출됩니다. 이 메소드는 일부 정리 작업도 수행하는데,
+총의 회전 상태를 초기화하고 `Tower`의 LockedOn 변수를 false로 설정합니다.
+
+다음은 Tower 스크립트입니다.
+
+```c#
+using UnityEngine;
+using System.Collections;
+
+public class Tower : MonoBehaviour
+{
+    [SerializeField]
+    private Animator _animator;
+
+    [SerializeField]
+    private float _fireSpeed = 3f;
+    private float _fireCounter = 0f;
+    private bool _canFire = true;
+
+    [SerializeField]
+    private Transform _muzzle;
+
+    [SerializeField]
+    private GameObject _projectile;
+
+    // 일반적으로 변수는 외부 접근을 제한하는 형태가 좋습니다.
+
+    // 따라서 _lockedOnState을 그대로 노출하지 말고 외부에서 접근할 수 있는
+    // 프로퍼티를 제공하는 편이 낫습니다.
+    private bool _lockedOnState = false;
+    public bool LockedOnState
+    {
+        get => _lockedOnState;
+        set => _lockedOnState = value;
+    }
+
+    private void Update()
+    {
+        if (_lockedOnState && _canFire)
+            StartCoroutine(Fire());
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.tag == "Player")
+            _animator.SetBool("TankInRange", true);
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.tag == "Player")
+            _animator.SetBool("TankInRange", false);
+    }
+
+    private void FireProjectile()
+    {
+        GameObject bullet = Instantiate(_projectile, _muzzle.position, _muzzle.rotation);
+
+        bullet.GetComponent<Rigidbody>().AddForce(_muzzle.forward * 300);
+    }
+
+    private IEnumerator Fire()
+    {
+        _canFire = false;
+        FireProjectile();
+
+        while (_fireCounter < _fireSpeed)
+        {
+            _fireCounter += Time.deltaTime;
+            yield return null;
+        }
+
+        _canFire = true;
+        _fireCounter = 0f;
+    }
+}
+```
