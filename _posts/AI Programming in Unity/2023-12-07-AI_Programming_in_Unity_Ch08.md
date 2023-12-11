@@ -332,4 +332,29 @@ Boost는 인스펙터를 통해 지정한 파티클 시스템의 Play를 호출�
 수평으로만 이동하길 원합니다. 다음과 같습니다.
 
 ```c#
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class HorizontalCam : MonoBehaviour
+{
+    [SerializeField]
+    private Transform _target;
+
+    private Vector3 _targetPosition;
+
+    private void Update()
+    {
+        _targetPosition = transform.position;
+        _targetPosition.z = _target.transform.position.z;
+
+        transform.position = Vector3.Lerp(transform.position, _targetPosition, Time.deltaTime);
+    }
+}
 ```
+
+보시다시피 단순하게 카메라의 목표 지점을 모든 축에 대해 현재 위치와 모두 동일하게 설정했습니다. 다만 이후
+목표 지점의 z축을 우리의 타겟과 동일하게 재지정했습니다.
+
+## 요약
+드디어 마지막까지 왔습니다! 지금까지의 내용을 기반으로 간단한 디펜스 게임을 만들어봤습니다!
