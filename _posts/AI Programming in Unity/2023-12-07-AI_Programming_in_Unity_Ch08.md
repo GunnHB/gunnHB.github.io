@@ -227,3 +227,109 @@ public class Projectile : MonoBehaviour
 }
 ```
 
+## 탱크 설정
+탱크 자체는 목표 지점을 도달한다는 목적을 가진 간단한 에이전트입니다. 앞에서 언급한 것처럼 플레이어는 탱크가 길을
+따라 이동하면서 능력을 활용해 타워의 포격으로부터 벗어나 안전하게 이동하도록 해야합니다.
+
+`Tank.cs`를 살펴봅시다.
+
+```c#
+using UnityEngine;
+using System.Collections;
+using UnityEngine.AI;
+
+public class Tank : MonoBehaviour
+{
+    [SerializeField]
+    private Transform _goal;
+    private NavMeshAgent _agent;
+
+    [SerializeField]
+    private float _speedBoostDuration = 3f;
+
+    [SerializeField]
+    private ParticleSystem _boostParticleSystem;
+
+    [SerializeField]
+    private float _shieldDuration = 3f;
+
+    [SerializeField]
+    private GameObject _shield;
+
+    private float _regularSpeed = 5f;
+    private float _boostedSpeed = 7f;
+    private bool _canBoost = true;
+    private bool _canShield = true;
+
+    private bool _hasShield;
+
+    private void Start()
+    {
+        _agent = GetComponent<NavMeshAgent>();
+
+        _agent.SetDestination(_goal.position);
+    }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.B))
+        {
+            if (_canBoost)
+                StartCoroutine(Boost());
+        }
+
+        if (Input.GetKeyDown(KeyCode.S))
+        {
+            if (_canShield)
+                StartCoroutine(Shield());
+        }
+    }
+
+    private IEnumerator Shield()
+    {
+        _canShield = false;
+        _shield.SetActive(false);
+        float shieldCounter = 0f;
+
+        while (shieldCounter < _shieldDuration)
+        {
+            shieldCounter += Time.deltaTime;
+            yield return null;
+        }
+
+        _canShield = true;
+        _shield.SetActive(false);
+    }
+
+    private IEnumerator Boost()
+    {
+        _canBoost = false;
+        _agent.speed = _boostedSpeed;
+        _boostParticleSystem.Play();
+        float boostCounter = 0f;
+
+        while (boostCounter < _speedBoostDuration)
+        {
+            boostCounter += Time.deltaTime;
+            yield return null;
+        }
+
+        _canBoost = true;
+        _boostParticleSystem.Pause();
+        _agent.speed = _regularSpeed;
+    }
+}
+```
+
+두 능력의 로직은 비슷합니다. `shield`는 인스펙터에 정의한 변수인 shield 게임 오브젝트를 활성화하거나
+비활성화합니다. 그리고 `shieldDuration`만큼의 시간이 흐른 후 이를 비활성화시키고 다시 플레이어가
+shield를 사용할 수 있게 합니다.
+
+`Boost` 코드의 가장 큰 차이는 게임 오브젝트를 활성화하거나 비활성화하는 것이 아니며,
+Boost는 인스펙터를 통해 지정한 파티클 시스템의 Play를 호출하고 NavMeshAgent의 속도를 2배로 일정 시간 동안 유지한다는 점입니다.
+
+마지막으로 카메라의 코드를 살펴봅시다. 해당 프로젝트에서는 카메라가 플레이어를 따라 z축을 기준으로
+수평으로만 이동하길 원합니다. 다음과 같습니다.
+
+```c#
+```
