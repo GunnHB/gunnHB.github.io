@@ -190,3 +190,40 @@ public class Tower : MonoBehaviour
     }
 }
 ```
+
+목표물을 발견하고 목표물에 총을 발사할 수 있다면 `Fire()` 코루틴을 호출합니다.
+여기서 왜 코루틴을 사용해서 발사하는지 알아봅시다.
+
+우리는 타워가 탱크를 향해 미친듯이 발사하길 원하진 않기 때문에 각 발사 간에 간격을 두기로 합니다.
+`FireProjectile()`을 호출한 후 `_canFire`를 false로 설정하고 0부터 `_fireSpeed`까지 카운트를 센 후
+다시 `_canFire`를 다시 true로 설정합니다. FireProjectile() 메소드는 포탄의 인스턴스화와 `RigidBody.AddForce`를
+사용한 발사를 처리합니다.
+
+## 타워 발사 처리
+![image](https://github.com/GunnHB/gunnHB.github.io/assets/117302300/fc79498a-72fd-4d97-bc9d-26a28e6f67f3){: width="70%" height="70%"}
+
+`bullet` 프리팹을 살펴보면 구 형태의 콜라이더가 연결되어 있습니다. 그리고 충돌 로직의 처리를 연결된 `Projectile` 스크립트를 살펴봅시다.
+
+```c#
+using UnityEngine;
+using System.Collections;
+
+public class Projectile : MonoBehaviour
+{
+    [SerializeField]
+    private GameObject _explosionPrefab;
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.tag == "Player" || other.tag == "Environment")
+        {
+            if (_explosionPrefab == null)
+                return;
+        }
+
+        GameObject explosion = Instantiate(_explosionPrefab, transform.position, Quaternion.identity);
+        Destroy(this.gameObject);
+    }
+}
+```
+
