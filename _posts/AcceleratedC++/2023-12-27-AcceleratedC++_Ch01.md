@@ -14,3 +14,6 @@ toc_sticky: true
 date: 2023-12-27
 last_modified_at: 2023-12-27
 ---
+
+🔔 \[AcceleratedC++\] 서적을 정리한 내용입니다. 🔔
+{: .notice}
