@@ -5,3 +5,5 @@ permalink: categories/ai_programming
 author_profile: true
 sidebar_main: true
 ---
+
+{% assign posts = site.categories['AI Programming'] %}

@@ -40,7 +40,7 @@ int main()
 	std::cin >> name;
 
 	// 인사말 작성
-	std::cout << "Hello, " << name "!" << std::endl;
+	std::cout << "Hello, " << name << "!" << std::endl;
 
 	return 0;
 }
