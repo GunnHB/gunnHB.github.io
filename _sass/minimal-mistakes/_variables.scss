@@ -14,7 +14,7 @@ $indent-var: 1.3em !default;
 
 /* system typefaces */
 $serif: Georgia, Times, serif !default;
-$sans-serif: -apple-system, BlinkMacSystemFont, "Roboto", "Segoe UI", "SUITE-Regular",
+$sans-serif: "SUITE-Regular", -apple-system, BlinkMacSystemFont, "Roboto", "Segoe UI",
     "Helvetica Neue", "Lucida Grande", Arial, sans-serif !default;
 $monospace: Monaco, Consolas, "Lucida Console", monospace !default;
 $customfont: "SUITE-Regular" !default;
@@ -156,9 +156,9 @@ $max-width: $x-large !default;
    Grid
    ========================================================================== */
 
-$right-sidebar-width-narrow: 200px !default;
-$right-sidebar-width: 300px !default;
-$right-sidebar-width-wide: 400px !default;
+$right-sidebar-width-narrow: 100px !default; // 200px !default;
+$right-sidebar-width: 200px !default; // 300px !default;
+$right-sidebar-width-wide: 250px !default; // 400px !default;
 
 /*
    Other

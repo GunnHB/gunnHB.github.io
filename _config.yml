@@ -19,7 +19,7 @@ locale                   : "ko-KR"
 title                    : "Dev Notes By Noob"
 title_separator          : "-"
 subtitle                 : # site tagline that appears below site title in masthead
-name                     : "Gunn"
+name                     : "Noob"
 description              : "공부하는 블로그입니다."
 url                      : "https://gunnhb.github.io/"
 baseurl                  : # the subpath of your site, e.g. "/blog"

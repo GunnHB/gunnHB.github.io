@@ -1,10 +1,10 @@
 ---
-title: "유니티 게임 AI 프로그래밍 2/e"
+title: "Aceelerated C++"
 layout: archive
-permalink: categories/ai_programming
+permalink: categories/accelerated_cpp
 author_profile: true
 sidebar_main: true
 ---
 
-<!-- {% assign posts = site.categories['AI Programming'] %} -->
+<!-- {% assign posts = site.categories['Accelerated Cpp'] %} -->
 <!-- {% for post in posts %} {% include archive-single2.html type=page.entries_layout %} {% endfor %} -->
