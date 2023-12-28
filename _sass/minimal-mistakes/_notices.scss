@@ -75,7 +75,7 @@
 /* Default notice */
 
 .notice {
-  @include notice($light-gray);
+  @include notice(#98aa7c); //@include notice($light-gray);
 }
 
 /* Primary notice */

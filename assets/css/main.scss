@@ -15,6 +15,8 @@ search: false
     font-style: normal;
 }
 
+@import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic+Coding&display=swap');
+
 code {
     // padding: 0.25rem;
     // background-color: #f0f0f0;
@@ -24,7 +26,6 @@ code {
     border-radius: 5px;
     font-size: 13px;
     line-height: 1.1rem;
-    font-family: $sans-serif;
-    // margin: 0 5px;
-    margin: 0.5px;
+    font-family: $gothicfont;
+    margin: 0 5px;
 }

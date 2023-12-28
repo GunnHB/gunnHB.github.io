@@ -14,10 +14,11 @@ $indent-var: 1.3em !default;
 
 /* system typefaces */
 $serif: Georgia, Times, serif !default;
-$sans-serif: "SUITE-Regular", -apple-system, BlinkMacSystemFont, "Roboto", "Segoe UI",
+$sans-serif: "SUITE-Regular", "Nanum Gothic Coding", -apple-system, BlinkMacSystemFont, "Roboto", "Segoe UI",
     "Helvetica Neue", "Lucida Grande", Arial, sans-serif !default;
 $monospace: Monaco, Consolas, "Lucida Console", monospace !default;
 $customfont: "SUITE-Regular" !default;
+$gothicfont: "Nanum Gothic Coding" !default;
 
 /* sans serif typefaces */
 $sans-serif-narrow: $sans-serif !default;
