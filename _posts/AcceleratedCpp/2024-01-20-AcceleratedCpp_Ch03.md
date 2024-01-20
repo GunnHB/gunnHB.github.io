@@ -80,9 +80,9 @@ int main() {
 }
 ```
 
-- `<`ios`>`
+- \<ios>
   - 입출력 라이브러리에서 전송된 문자 수나 버퍼 크기를 나타내려고 사용하는 타입인 `streamsize`를 정의
-- `<`iomanip`>`
+- \<iomanip>
   - 출력 결과의 유효 자릿수를 결정하는 조작어인 `setprecision`을 정의
 
 endl은 자주 사용하므로 `<`iomanip`>`가 아닌 `<`iostream`>`이 정의합니다.
