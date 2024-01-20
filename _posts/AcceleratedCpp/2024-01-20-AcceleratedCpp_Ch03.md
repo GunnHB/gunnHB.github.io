@@ -85,5 +85,5 @@ int main() {
 - \<iomanip>
   - 출력 결과의 유효 자릿수를 결정하는 조작어인 `setprecision`을 정의
 
-endl은 자주 사용하므로 `<`iomanip`>`가 아닌 `<`iostream`>`이 정의합니다.
+endl은 자주 사용하므로 \<iomanip>가 아닌 \<iostream>이 정의합니다.
 {: .notice--warning}
