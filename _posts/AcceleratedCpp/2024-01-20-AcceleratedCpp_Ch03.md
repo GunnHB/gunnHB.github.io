@@ -12,7 +12,7 @@ toc: true
 toc_sticky: true
  
 date: 2024-01-20
-last_modified_at: 2024-01-20
+last_modified_at: 2024-01-27
 ---
 
 🔔 \[AcceleratedC++\] 서적을 정리한 내용입니다. 🔔
