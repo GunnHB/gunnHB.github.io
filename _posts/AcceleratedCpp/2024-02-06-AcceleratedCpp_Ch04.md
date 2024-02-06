@@ -110,7 +110,7 @@ double median(vector<double> vec)
 함수의 인수가 함수가 받을 수 있는 값의 범위를 벗어났음을 보고할 때 사용합니다. 또한 던지려는 domain_error 객체를
 생성할 때 무엇이 잘못되었는지 설명하는 문자열을 넣을 수 있습니다.
 
-### 성정 산출 방식 다시 구현하기
+### 성적 산출 방식 다시 구현하기
 종합 과제 점수를 구하는 부분을 함수 내부에 작성하면 다음과 같습니다.
 
 ```c++
@@ -149,3 +149,154 @@ const vector<double>& chw = homework;
 
 함수 내부를 보면 grade함수에서 다른 grade함수를 호출하고 있습니다. 두 함수는 같은 이름이지만 다른 매개변수를 필요로 하는데,
 이를 `오버로딩overloading`이라고 합니다.
+
+### read_hw 함수
+벡터에 과제 점수를 넣는 부분을 함수로 만든다고 생각해보면
+
+- 입력된 과제 점수
+- 입력이 제대로 일어났는지 나타내는 값
+
+위 2개의 값을 한번에 반환해야 합니다.
+
+두 개 이상의 값을 반환하는 방법은 없습니다. 간접적인 방법으로 반환하려는 값 2개 중 하나를 담은 객체의 참조를 함수의
+매개변수로 지정하는 것이 있습니다.
+
+```c++
+// 입력 스트림에서 과제 점수를 읽어서 vector<double>에 넣음
+istream& read_hw(istream& in, vector<double>& hw)
+{
+    return in;
+}
+```
+
+const가 없는 매개변수는 보통 함수의 인수로 사용하는 객체를 수정하겠다는 의미입니다.
+
+```c++
+vector<double> homework;
+read_hw(cin, homework)
+```
+
+read_hw 함수의 두 번째 매개변수가 참조 타입일 때는 read_hw 함수를 호출하면 homework의 값이 변경될 수 있음을 예상해야 합니다.
+
+함수에서 인수를 바꿀 것이 예상되므로 표현식 형태의 인수로 함수를 호출할 수는 없습니다.
+대신 1value 인수를 참조 매개변수로 전달합니다. 1value라는 것은 `비일시적nontemporary 객체`를 나타내는 값입니다.
+
+read_hw 함수는 참조 타입인 in을 반환합니다. 결론적으로 객체를 복사하지 않고 받은 후, 복사하지 않은 채로 반환할 것입니다.
+입력 스트림을 반환하므로 다음처럼 코드를 작성할 수 있습니다.
+
+```c++
+if(read_hw(cin, homework))
+{ /* 생략 */ }
+```
+
+이는 다음과 같은 의미입니다.
+
+```c++
+read_hw(cin, homework);
+if(cin)
+{ /* 생략 */ }
+```
+
+다음은 모든 과제 점수를 입력받아야 하므로 다음 형태의 코드를 작성합니다.
+
+```c++
+// 아직 완성된 코드가 아님
+double x;
+
+while(in >> x)
+    hw.push_back(x);
+```
+
+해당 코드는 정상적으로 동작하지 않습니다.
+
+- hw에 대한 정의가 없습니다.
+- 반복문을 언제 멈출지 알 수 없습니다.
+
+먼저 hw 안에 이미 어떤 데이터가 있을지도 모릅니다. 그렇기 때문에 입력받은 작업을 시작하기 전
+hw.Clear()를 호출하여 문제를 해결할 수 있습니다.
+
+다음으로 반복문의 경우 점수를 더 이상 읽을 수 없을 때까지 실행할 수 있지만 두 가지의 문제점이 있습니다.
+
+- EOF에 도달했을 경우
+- 입력 스트림에 점수가 아닌 다른 무언가가 있을 경우
+
+보통 EOF 표시는 입력 시도가 실패했음을 의미하기 때문에 모든 데이터를 성공적으로 읽은 후 나타나는 것은 문제가 있습니다.
+
+또한 점수가 아닌 무언가를 마주쳤을 경우 라이브러리에서 입력 스트림을 `실패 상태failure state`로 표시하게끔 합니다.
+이것은 EOF에 도달한 것과 같은 의미로, 앞으로의 입력 요청이 실패할 것입니다.
+
+이를 위해서는 라이브러리에서 입력 시도를 할 수 없는 모든 상태(EOF 또는 유효하지 않은 입력)를 무시하도록 지시하는 것입니다.
+in 내부의 오류 상태를 재설정 하려면 in.Clear()를 호출해야 합니다. in.Clear()는 입력이 실패하더라도 계속 코드를 실행할 것을
+라이브러리에 지시합니다.
+
+read_hw 완성하면 다음과 같습니다.
+
+```c++
+// 입력 스트림에서 과제 점수를 읽어서 vector<double>에 넣음
+istream& read_hw(istream& in, vector<double>& hw)
+{
+    if (in)
+    {
+        // 이전 내용을 제거
+        hw.Clear();
+
+        // 과제 점수를 읽음
+        double x;
+
+        while(in >> x)
+            hw.push_back(x);
+    
+        // 다음 학생의 점수 입력 작업을 고려해 스트림을 지움
+        in.Clear();
+    }
+
+    return in;
+}
+```
+
+멤버 함수 Clear가 istream 객체와 벡터 객체 사이에서 완전히 다른 동작을 실행하는 것에 주의합시다.
+{: .notice--warning}
+
+### 함수를 사용하여 학생 성적 구하기
+지금까지의 내용을 이용해 다시 구현하면 다음과 같습니다. 코드는 main 함수만 구현합니다.
+
+```c++
+int main()
+{
+    // 학생의 이름을 묻고 읽음
+    cout << "Please enter your first name: ";
+    string name;
+    cin >> name;
+    cout << "Hello, " << name << "!" << endl;
+
+    // 중간시험과 기말시험의 점수를 묻고 읽음
+    cout << "Please enter your midterm and final exam grades: ";
+    double midterm, final;
+    cin >> midterm >> final;
+
+    // 과제 점수를 물음
+    cout << "Enter all your homework grades, "
+            "followd by end-of-file: ";
+    vector<double> homework;
+
+    // 과제 점수를 읽음
+    read_hw(cin, homework);
+
+    // 종합 점수를 계산
+    try
+    {
+        double final_grade = grade(midtermm final, homework);
+        streamsize prec = cout.precision();
+        cout << "Your final grade is " << setprecision(3)
+            << final_grade << setprecision(prec) << endl;
+    }
+    catch (domain_error)
+    {
+        cout << endl << "You must enter your grades. "
+                        "Please try again." << endl;
+        return 1;
+    }
+
+    return 0;
+}
+```
