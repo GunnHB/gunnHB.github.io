@@ -12,7 +12,7 @@ toc: true
 toc_sticky: true
  
 date: 2024-02-06
-last_modified_at: 2024-02-06
+last_modified_at: 2024-02-11
 ---
 
 🔔 \[AcceleratedC++\] 서적을 정리한 내용입니다. 🔔
@@ -299,4 +299,99 @@ int main()
 
     return 0;
 }
+```
+
+## 데이터 구조화
+앞선 프로그램은 학생 1명의 성적을 구하는 데 유용합니다. 수강하는 모든 학생의 성적을 구할 수 있도록 프로그램을 수정합시다.
+
+학생의 점수를 일일이 입력받는 대신 이름과 점수가 포함된 파일을 제공한다고 가정해봅시다.
+
+```
+Smith 93 91 47 90 92
+Carpenter 75 90 87 92 93
+```
+
+학생 1명의 데이터를 저장할 공간이 있다면 벡터를 사용하여 모든 학생의 데이터를 저장할 수 있습니다. 학생의 데이터를 저장하는
+데이터 구조를 만들고 저장한 데이터를 읽고 처리하는 몇 가지 보조 함수를 만들어 이를 해결해봅시다.
+
+### 학생 데이터 통합하기
+먼저 학생 1명에 관련된 모든 정보를 하나의 공간에 저장할 수 있는 방법이 필요합니다. 
+
+이를 정의하면 다음과 같습니다.
+
+```c++
+struct Student_info
+{
+    string name;
+    double midterm, final;
+    vector<double> homework;
+};
+```
+
+`구조체struct`인 Student_info는 4개의 데이터 멤버가 있는 타입입니다. Student_info 자체가 타입이므로
+4개의 데이터 멤버가 있는 Student_info 타입의 객체를 각각 정의할 수 있습니다.
+
+### 학생 점수 관리
+학생들의 점수를 다루는 개념을 처리하기 쉽게 나누면 세 단계의 개별 함수로 표현할 수 있습니다.
+
+- Student_info 객체에 데이터를 입력
+- Student_info 객체의 종합 점수를 생성
+- Student_info 객체들의 요소를 갖는 벡터를 정의
+
+```c++
+istream& read(istream& is Student_info& s)
+{
+    // 학생의 이름, 중간시험 점수, 기말시험 점수를 읽어 저장
+    is >> s.name >> s.midterm >> s.final;
+    read_hw(is, s.homework);    // 학생의 모든 과제 점수를 읽어 저장
+    return is;
+}
+```
+
+read 함수는 2개의 참조 매개변수를 가집니다.
+
+- 읽어야 할 istream
+- 읽은 것을 저장할 객체
+
+매개변수 s는 참조 타입일므로 함수 안에서 s를 사용하면 전달할 인수의 상태에 영향을 줍니다.
+
+```c++
+double grade(const Student_info& s)
+{
+    return grade(s.midterm, s.final, s.homework);
+}
+```
+
+위 함수는 Student_info 타입의 객체를 사용하여 double 타입의 종합 점수를 구해 반환합니다. const Student_info&이므로 함수를 호출할 때
+Student_info 객체를 통째로 복사하면서 오버헤드를 피한다는 점을 유의합시다.
+
+마지막으로 Student_info 객체의 벡터를 sort로 정렬합시다.
+
+```c++
+sort(student.begin(), student.end());   // 틀림
+```
+
+sort는 함수가 벡터의 요소들을 순서대로 비교할 때 < 연산자를 사용합니다. vector<double> 타입인 벡터에 sort 함수를 호출하면
+< 연산자는 2개의 double 타입 값을 비교하여 알맞은 결과를 제공합니다.
+
+그렇기에 위의 코드는 Student_info 타입의 값을 비교하기 위한 명확한 기준이 없기 때문에 컴파일러는 에러를 반환합니다.
+
+이를 위해 sort는 세 번째의 선택 인수로 `서술predicate 함수`가 있습니다. 서술 함수는 bool 타입인 진릿값을 반환하는 함수입니다.
+
+```c++
+bool compare(const Student_info& x, const Strudent_info& y)
+{
+    return x.name < y.name;
+}
+```
+
+위 함수는 문자열을 비교하려고 < 연산자를 제공하는 문자열 클래스에 Student_info를 비교하는 작업을 맡깁니다.
+
+왼쪽 피연산자가 오른쪽 피연산자보다 알파벳순으로 작으면 온쪽 피연산자보다 작다고 간주합니다.
+{: .notice--warning}
+
+이를 세 번째 인수에 넣으면 벡터 정렬이 가능합니다.
+
+```c++
+sort(student.begin(), student.end(), compare);
 ```
