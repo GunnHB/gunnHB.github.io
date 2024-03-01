@@ -423,6 +423,15 @@ double optimistic_median(const Student_info& s)
 }
 ```
 
+remove 알고리즘은 주어진 값과 일치하는 모든 값을 찾아 컨테이너에서 해당 값을 제거하고 제거하지 않은 모든 값을
+지정한 대상으로 복사합니다. 
+
+remove_copy 알고리즘은 3개의 반복자와 1개의 값을 인수로 갖습니다. 대부분의 알고리즘처럼 첫 2개의 반복자는 탐색할 범위를 나타내고
+세 번째 반복자는 복사한 값을 저장할 대상의 시작점을 나타냅니다.
+
+remove_copy 알고리즘 copy 알고리즘과 마찬가지로 복사된 모든 요소를 저장할 곳에 공간이 충분하다고 가정합니다.
+{: .notice--warning}
+
 함수는 homework 벡터에서 0이 아닌 요소들을 추출해 새로 만든 nonzero 벡터에 저장합니다. 0이 아닌 과제 점수가 존재한다면
 grade 함수를 호출해 실제로 제출한 과제 점수의 중앙값으로 학생의 최종 점수를 계산합니다.
 
@@ -445,3 +454,56 @@ vector<Student_info> extract_fails(vector<Student_info>& students)
     return fail;
 }
 ```
+
+remove_copy_if 함수를 사용하여 과락 학생들의 정보를 fail 벡터로 복사합니다. 함수는 조건을 판별하려고 값 대신 서술 함수를 네 번째
+인수로 전달하는 점을 제외하면 remove_copy 함수처럼 동작합니다.
+
+```c++
+bool pgrade(const Student_info& s)
+{
+    return !fgrade(s);
+}
+```
+
+remove_copy_if 함수에서는 서술 함수를 만족하는 각 요소를 제거합니다. 문맥 상 요소를 제거하는 것은 복사하지 않는 것을 의미하므로
+서술 함수를 만족하지 않는 요소들만 복사합니다. 따라서 remove_copy_if 함수의 네 번째 인수로 pgrade 함수를 전달하면 과락 학생들의 정보만 복사합니다.
+
+erase 함수는 remove_if 함수를 호출하여 과락 학생들의 정보 요소를 제거합니다.
+
+### 벡터를 한 번 탐색하는 방식
+위 방식은 remove_copy_if, remove_if 함수에서 모든 요소의 최종 점수를 각각 한 번씩 총 두 번 계산하기 때문에 수정이 필요합니다.
+
+우리는 하나의 순차열을 인수로 전달받고 서술 함수를 만족시키는 요소들을 그렇지 않은 요소들보다 앞쪽에 위치하도록 순차열 안 요소들을 재배치합니다.
+
+이를 위한 함수로 아래 두 가지를 사용할 수 있습니다.
+
+- partition
+    - 요소들을 카테고리로 구분하여 재배치
+- stable_partition
+    - partition 함수와 달리 각 카테고리 안에서 요소 순서를 유지하면서 재배치
+
+예를 들어 학생들의 정보가 학생 이름을 기준으로 알파벳순으로 정렬되어 있고 각 카테고리 안에서 순서를 유지하려면 stable_partition 함수를 사용해야 합니다.
+
+```c++
+vector<Student_info> extract_fails(vector<Student_info>& students)
+{
+    vector<Student_info>::iterator iter = stable_partition(students.begin(), students.end(), pgrade);
+
+    vector<Student_info> fail(iter, students.end());
+    students.erase(iter, students.end());
+
+    return fail;
+}
+```
+
+과락 학생을 의미하는 [iter, students.end()) 범위의 요소들을 복사하여 fail 벡터를 만든 다음 students 벡터에서 해당 요소들을 지워버립니다.
+
+## 알고리즘, 컨테이너, 반복자
+알고리즘, 반복자, 컨테이너를 사용할 때 이해해야 할 중요한 사실이 있습니다.
+
+`알고리즘은 컨테이너의 요소를 다루는 것이지 컨테이너를 다루는 것이 아닙니다.`
+
+sort, remove_if, partition 함수들에서는 요소들이 새로운 위치로 이동하지만 컨테이너 자체의 속성은 변하지 않습니다.
+
+더욱 중요한 것은 벡터와 문자열은 erase 함수나 insert 함수 같은 연산이 지우거나 삽입한 요소 이후의 요소들을 나타내는 모든 반복자를 무효로 만든다는 사실입니다.
+이러한 연산들은 반복자들을 무효로 만들 수 있으므로 해당 연산을 사용한다면 반복자의 값을 저장할 때 주의를 기울여야 합니다.
