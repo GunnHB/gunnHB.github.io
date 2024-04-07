@@ -40,18 +40,117 @@ last_modified_at: 2023-09-10
 ### 싱글턴 패턴의 장단점
 싱글턴 패턴의 장점은
 
-- __전역 접근 가능__
+- **전역 접근 가능**
     - 실글턴 패턴을 사용하여 리소스나 서비스의 전역 접근점을 생성할 수 있다.
-- __동시성 제어__
+- **동시성 제어**
     - 공유 자원에 동시 접근을 제한하고자 사용 가능하다
 
 싱글턴 패턴의 단점은
 
-- __유닛 테스트__
+- **유닛 테스트**
     - 싱글턴 오브젝트가 다른 싱글턴에 종속될 수 있다. 하나가 누락되면
       종송성이 끊어진다.
-- __잘못된 습관__
-    - 쉬운 사용으 인해 정교한 작업이 귀찮게 느껴진다.
+- **잘못된 습관**
+    - 쉬운 사용으로 인해 정교한 작업이 귀찮게 느껴진다.
 
 디자인을 선택할 때 아키텍쳐의 유지 및 관리, 확장, 테스트 가능 여부를 항상 염두에 둡시다.
 {: .notice--warning}
+
+## 게임 매니저 디자인하기
+일반적으로 게임 매니저는 개발자가 싱글턴으로 구현하지만 코드마다 그 관리 범위가 다릅니다.
+
+프로그래머에 따라 최고 레벨의 게임 상태를 관리하거나 전역적으로 접근할 수 있는 게임 시스템의
+전면 인터페이스로 싱글턴을 사용합니다.
+{: .notice--warning}
+
+게임 매니저는 게임의 전체 수명 동안 살아있어야 한다는 점을 명심해야합니다.
+
+## 게임 매니저 구현하기
+
+```c#
+using UnityEngine;
+
+public class Singletone <T> : MonoBehaviour where T : Component
+{
+    private static T _instance;
+
+    public static T Instance
+    {
+        get
+        {
+            if(_instance == null)
+            {
+                // 지정한 타입의 첫 번째로 로드된 오브젝트를 검색
+                _instance = FindObjectByType<T>();
+
+                if(_instance == null)
+                {
+                    // 없으면 새로운 오브젝틀르 생성한 후 컴포넌트를 추가
+                    GmaeObject obj = new GameObject();
+                    obj.name = typeof(T).Name;
+                    _instance = obj.AddComponent<T>();
+                }
+            }
+
+            return _instance;
+        }
+    }
+
+    public virtual void Awake()
+    {
+        if(_instance == null)
+        {
+            _instance = this as T;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+            Destroy(gameObject);
+    }
+}
+```
+
+엔진이 Awake()를 호출했을 때 싱글턴 컴포넌트는 메모리에 초기화된 자신의 인스턴스가 이미
+있는지 확인한다는 것을 명심해야 합니다.
+
+다음은 GameManager 클래스의 스켈레톤 코드입니다.
+
+```c#
+using System;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class GameManager : MonoBahviour
+{
+    private DateTime _sessionStartTime;
+    private DateTime _sessionEndTime;
+
+    private void Start()
+    {
+        // todo:
+        // - 플레이어 세이브 / 로드
+        // - 세이브가 없으면 플레이어 등록 씬으로 리다이렉션
+        // - 백엔드를 호출하고 일일 챌린지와 보상을 얻음
+
+        _sessionStartTime = DateTime.Now;
+        Debug.Log("Game session start @: " + DateTime.Now);
+    }
+
+    private void OnApplicationQuit()
+    {
+        _seesionEndTime = DateTime.Now;
+         
+        TimeSpan timeDifference = _sessionEndTime.Subtract(_sessionStartTime);
+
+        Debug.Log("Game session ended @: " + DatTime.Now);
+        Debug.Log("Game session lasted: " + timeDifference);
+    }
+
+    private void OnGUI()
+    {
+        if (GUILayout.Button("Next Scene"))
+        {
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + i);
+        }
+    }
+}
+```
