@@ -155,6 +155,8 @@ public class GameManager : MonoBahviour
 }
 ```
 
+{: .notice--}
+
 위 GameManager를 Singleton으로 변경한다면 다음과 같다.
 
 ```c#
