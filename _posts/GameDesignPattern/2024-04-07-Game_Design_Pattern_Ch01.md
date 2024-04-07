@@ -149,8 +149,22 @@ public class GameManager : MonoBahviour
     {
         if (GUILayout.Button("Next Scene"))
         {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + i);
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
         }
     }
 }
 ```
+
+위 GameManager를 Singleton으로 변경한다면 다음과 같다.
+
+```c#
+public class GameManager : Singleton<GameManager>
+{
+    ...
+}
+```
+
+## 정리
+싱글턴 패턴은 유니티의 코딩 모델에 완벽한 패턴이지만 지나친 사용은 과한 의존을 불러온다는 것을 잊지 맙시다.
+
+다음 포스팅에서는 상태 패턴에 대해 알아봅시다.
