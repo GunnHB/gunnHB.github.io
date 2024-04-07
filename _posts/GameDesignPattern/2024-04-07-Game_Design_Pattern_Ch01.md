@@ -126,7 +126,7 @@ public class GameManager : MonoBahviour
 
     private void Start()
     {
-        // todo:
+        // TODO:
         // - 플레이어 세이브 / 로드
         // - 세이브가 없으면 플레이어 등록 씬으로 리다이렉션
         // - 백엔드를 호출하고 일일 챌린지와 보상을 얻음
@@ -155,9 +155,10 @@ public class GameManager : MonoBahviour
 }
 ```
 
-{: .notice--}
+주석 처리된 todo의 내용은 게임 매니저의 잠재적인 작업 목록입니다.
+{: .notice--info}
 
-위 GameManager를 Singleton으로 변경한다면 다음과 같다.
+위 GameManager를 Singleton으로 변경한다면 다음과 같습니다.
 
 ```c#
 public class GameManager : Singleton<GameManager>
