@@ -224,7 +224,7 @@ class Invoker : MonoBahaviour
 
     private SortedList<float, Command> _recordedCommands = new();
     
-    #region 입력 구현부
+    #region 입력 기록 구현부
     public void ExecuteCommand(Command command)
     {
         command.Execute();
@@ -402,7 +402,7 @@ public class BikeController : MonoBahaviour
 ```
 
 ## 구현 검토하기
-작성된 내용을 프로젝트에 바로 적용시키기엔 굉장히 미비합니다. 하지만 해당 포스트는 사용하는 방법에 대한 포스팅임을 잊지 맙시다.
+작성된 내용을 프로젝트에 바로 적용시키기엔 굉장히 미비합니다. 해당 포스트는 사용하는 방법에 대한 포스팅임을 잊지 맙시다.
 
 ## 정리
 이번 포스팅에서는 커맨드 패턴을 사용하여 간단하고 기능적인 리플레이 기능을 구현해보았습니다.
