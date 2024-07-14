@@ -15,7 +15,7 @@ date: 2024-07-14
 last_modified_at: 2024-07-14
 ---
 
-🔔 [문제 풀러가기](https://www.acmicpc.net/problem/2193) 🔔
+🔔 [백준::2193 이친수 문제 풀러가기](https://www.acmicpc.net/problem/2193) 🔔
 {: .notice}
 
 ## 문제
