@@ -97,3 +97,7 @@ long long GetPinary(const long long& input)
 	return pinaryVector[input - 1];
 }
 ```
+
+## 느낀 점
+처음 봤을 때는 난해했지만 규칙만 잘 따라가면 쉽게 풀 수 있는 문제였습니다. 하지만 피보나치 수열에 대한
+지식이 없거나 바로 떠오르지 않았다면 굉장히 헤멨을 것 같습니다.😅
