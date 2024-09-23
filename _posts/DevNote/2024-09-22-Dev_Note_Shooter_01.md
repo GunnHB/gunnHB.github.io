@@ -4,9 +4,9 @@ excerpt: "언리얼 개발 일지입니다!"
 
 author: gunnHB
 categories: 
- - Network
+ - DevNote
 tags: 
- - [Github, Git, Unreal, Programming, Network, C++]
+ - [Github, Git, Unreal, Programming, DevNote, C++]
 
 toc: true
 toc_sticky: true
